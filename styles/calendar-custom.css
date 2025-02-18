@@ -1,0 +1,76 @@
+/* Customize calendar header text */
+.rbc-toolbar-label {
+  text-transform: capitalize;
+}
+
+/* Customize day names */
+.rbc-header {
+  text-transform: capitalize;
+  padding: 4px 2px;
+  font-size: 0.9rem;
+}
+
+/* Customize time slots */
+.rbc-time-slot {
+  font-size: 0.875rem;
+}
+
+/* Customize today's date */
+.rbc-today {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Customize event styles */
+.rbc-event {
+  background-color: #adfa1d;
+  color: black;
+  border: none;
+  border-radius: 4px;
+}
+
+.rbc-event.rbc-selected {
+  background-color: #98e119;
+}
+
+/* Customize time gutter */
+.rbc-time-gutter .rbc-timeslot-group {
+  text-align: right;
+  padding-right: 8px;
+}
+
+/* Customize current time indicator */
+.rbc-current-time-indicator {
+  background-color: #ff0000;
+  height: 2px;
+}
+
+/* Adjust month view day number position */
+.rbc-date-cell {
+  text-align: center;
+}
+
+/* Customize week view header */
+.rbc-time-header-content .rbc-header {
+  padding: 4px;
+}
+
+/* Customize agenda view */
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  padding: 6px 4px;
+}
+
+/* Customize toolbar buttons */
+.rbc-btn-group button {
+  text-transform: capitalize;
+}
+
+/* Ensure toolbar buttons have enough space for German text */
+.rbc-toolbar button {
+  padding: 6px 12px;
+}
+
+/* Adjust month view for longer day names */
+.rbc-month-view .rbc-header {
+  padding: 4px 2px;
+}
+

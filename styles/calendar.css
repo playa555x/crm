@@ -1,0 +1,147 @@
+/* Reset calendar styles */
+.rbc-calendar {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Header styles */
+.rbc-header {
+  padding: 8px;
+  font-weight: normal;
+  border: 1px solid #e5e5e5;
+  border-bottom: none;
+  background: white;
+}
+
+.rbc-header span {
+  display: block;
+  text-align: center;
+}
+
+/* Time grid styles */
+.rbc-time-view {
+  border: 1px solid #e5e5e5;
+  background: white;
+}
+
+.rbc-time-header {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.rbc-time-content {
+  border-top: 1px solid #e5e5e5;
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid #e5e5e5;
+  min-height: 80px;
+}
+
+.rbc-time-slot {
+  border-top: 1px solid #f0f0f0;
+  min-height: 20px;
+}
+
+.rbc-time-column {
+  border-left: 1px solid #e5e5e5;
+}
+
+/* Time label styles */
+.rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.rbc-label {
+  padding: 5px;
+  color: #666;
+  font-size: 0.85em;
+}
+
+/* Event styles */
+.rbc-event {
+  background-color: #3174ad;
+  color: white;
+  border: none;
+  border-radius: 2px;
+  padding: 2px 5px;
+  font-size: 0.85em;
+}
+
+.rbc-event.rbc-selected {
+  background-color: #265985;
+}
+
+/* Today highlight */
+.rbc-today {
+  background-color: #fcf8e3;
+}
+
+/* Current time indicator */
+.rbc-current-time-indicator {
+  background-color: #74ad31;
+  height: 2px;
+}
+
+/* Time column */
+.rbc-time-column {
+  background: #fff;
+}
+
+/* Overrides for the minimalist design */
+.rbc-time-view,
+.rbc-time-header.rbc-overflowing,
+.rbc-time-header-content,
+.rbc-time-content,
+.rbc-time-content > * + * > * {
+  border-left: 1px solid #e5e5e5;
+}
+
+.rbc-timeslot-group {
+  min-height: 20px !important;
+}
+
+.rbc-time-slot {
+  min-height: 5px !important;
+}
+
+/* Day column styles */
+.rbc-day-slot {
+  border-right: 1px solid #e5e5e5;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Header date format */
+.rbc-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  font-weight: normal;
+}
+
+.rbc-header span {
+  display: block;
+  text-align: center;
+}
+
+/* Remove unnecessary borders */
+.rbc-time-view {
+  border: 1px solid #e5e5e5;
+}
+
+.rbc-time-content {
+  border-top: 1px solid #e5e5e5;
+}
+
+/* Adjust time column width */
+.rbc-time-gutter {
+  width: 75px;
+}
+
+/* Make the calendar take full height */
+.rbc-calendar {
+  height: 100%;
+}
+
