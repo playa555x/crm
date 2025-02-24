@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { addEmployee } from "@/lib/supabase/employees"
 import { toast } from "@/components/ui/use-toast"
 import { Database } from "@/types/supabase"
 
@@ -27,19 +27,21 @@ interface AddEmployeeDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-type EmployeeFormData = Database['public']['Tables']['employees']['Insert'] & {
-  role: string
-}
+type EmployeeFormData = Database['public']['Tables']['employees']['Insert']
 
 export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { register, handleSubmit, setValue, formState: { errors }, reset } = useForm<EmployeeFormData>()
-  const supabase = createClientComponentClient()
 
   const onSubmit = async (data: EmployeeFormData) => {
     setIsLoading(true)
     try {
-      // 1. Sende Einladung über die API
+      // Debug-Log für Formulardaten
+      console.log('Form data being submitted:', data)
+
+      // Debug-Log für API-Aufruf
+      console.log('Sending invitation to:', data.email)
+
       const response = await fetch("/api/invite", {
         method: "POST",
         headers: {
@@ -59,30 +61,26 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
         }),
       })
 
+      // Debug-Log für API-Antwort
+      const responseData = await response.json()
+      console.log('Server response:', responseData)
+
       if (!response.ok) {
-        throw new Error("Fehler beim Senden der Einladung")
+        throw new Error(responseData.error || "Fehler beim Senden der Einladung")
       }
 
-      // 2. Erstelle den Mitarbeiter-Eintrag in der employees Tabelle
-      const { error: employeeError } = await supabase
-        .from("employees")
-        .insert([{
-          ...data,
-          status: "pending",
-        }])
-
-      if (employeeError) throw employeeError
-
+      await addEmployee(data)
       toast({
-        title: "Einladung gesendet",
-        description: `Eine Einladung wurde an ${data.email} gesendet.`,
+        title: "Mitarbeiter hinzugefügt",
+        description: "Der neue Mitarbeiter wurde erfolgreich hinzugefügt.",
       })
       reset()
       onOpenChange(false)
     } catch (error) {
+      console.error('Error details:', error) // Debug-Log für Fehler
       toast({
         title: "Fehler",
-        description: error instanceof Error ? error.message : "Ein Fehler ist aufgetreten.",
+        description: "Beim Hinzufügen des Mitarbeiters ist ein Fehler aufgetreten.",
         variant: "destructive",
       })
     } finally {
@@ -96,7 +94,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
         <DialogHeader>
           <DialogTitle>Neuen Mitarbeiter hinzufügen</DialogTitle>
           <DialogDescription>
-            Fügen Sie einen neuen Mitarbeiter hinzu. Eine Einladungs-E-Mail wird automatisch versendet.
+            Fügen Sie einen neuen Mitarbeiter zum System hinzu
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -111,11 +109,6 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
                 className="col-span-3"
                 {...register("personnelNumber", { required: true })}
               />
-              {errors.personnelNumber && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  Personalnummer ist erforderlich
-                </p>
-              )}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="firstName" className="text-right">
@@ -126,11 +119,6 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
                 className="col-span-3"
                 {...register("firstName", { required: true })}
               />
-              {errors.firstName && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  Vorname ist erforderlich
-                </p>
-              )}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="lastName" className="text-right">
@@ -141,11 +129,6 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
                 className="col-span-3"
                 {...register("lastName", { required: true })}
               />
-              {errors.lastName && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  Nachname ist erforderlich
-                </p>
-              )}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
@@ -155,16 +138,8 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
                 id="email"
                 type="email"
                 className="col-span-3"
-                {...register("email", { 
-                  required: true,
-                  pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i 
-                })}
+                {...register("email", { required: true })}
               />
-              {errors.email && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  Gültige E-Mail-Adresse ist erforderlich
-                </p>
-              )}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="phone" className="text-right">
@@ -176,11 +151,6 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
                 className="col-span-3"
                 {...register("phone", { required: true })}
               />
-              {errors.phone && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  Telefonnummer ist erforderlich
-                </p>
-              )}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="position" className="text-right">
@@ -215,7 +185,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Wird eingeladen..." : "Mitarbeiter einladen"}
+              {isLoading ? "Wird hinzugefügt..." : "Mitarbeiter hinzufügen"}
             </Button>
           </DialogFooter>
         </form>
