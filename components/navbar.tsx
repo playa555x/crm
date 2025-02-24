@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Search, User, Bell } from "lucide-react"
+import { Search, User, Bell } from 'lucide-react'
 import { AdvancedSearch } from "@/components/advanced-search"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -20,12 +22,23 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export function Navbar() {
+  const router = useRouter()
+  const supabase = createClientComponentClient()
   const [notifications, setNotifications] = useState([
     { id: 1, message: "Neue Anfrage von Kunde XYZ" },
     { id: 2, message: "Rechnung für Projekt ABC fällig" },
     { id: 3, message: "Termin mit Lieferant in 2 Stunden" },
   ])
   const [showNotifications, setShowNotifications] = useState(false)
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push('/auth')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -75,7 +88,9 @@ export function Navbar() {
               <DropdownMenuItem asChild>
                 <Link href="/create-account">Neuen Account anlegen</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Abmelden</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>
+                Abmelden
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -104,4 +119,3 @@ export function Navbar() {
     </nav>
   )
 }
-

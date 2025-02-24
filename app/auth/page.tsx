@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label"
 
 export default function AuthPage() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -20,13 +22,20 @@ export default function AuthPage() {
     setMessage("")
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
-        setMessage(error.message)
+        setMessage(error.message === "Invalid login credentials"
+          ? "E-Mail oder Passwort nicht korrekt"
+          : error.message
+        )
+      } else if (data?.user) {
+        // Erfolgreich eingeloggt, leite zum Dashboard weiter
+        router.push("/")
+        router.refresh()
       }
     } catch (error) {
       setMessage("Ein Fehler ist aufgetreten.")
