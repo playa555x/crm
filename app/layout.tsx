@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter } from 'next/font/google'
+import { cookies } from 'next/headers'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
 import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/sidebar"
@@ -27,17 +29,28 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const supabase = createServerComponentClient({ cookies })
+  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="de" suppressHydrationWarning>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
         <Providers attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <div className="relative flex min-h-screen flex-col">
               <Navbar />
               <div className="flex flex-1">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto pl-16 transition-all duration-300 ease-in-out">{children}</main>
+                {session && <Sidebar />}
+                <main className={cn(
+                  "flex-1 overflow-y-auto transition-all duration-300 ease-in-out",
+                  session ? "pl-16" : "pl-0"
+                )}>
+                  {children}
+                </main>
               </div>
             </div>
           </AuthProvider>
@@ -46,4 +59,3 @@ export default function RootLayout({ children }: RootLayoutProps) {
     </html>
   )
 }
-
