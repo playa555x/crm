@@ -83,9 +83,9 @@ export async function POST(request: Request) {
       user_metadata: {
         invited_by: session.user.id,
         role: role,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        personnelNumber: userData.personnelNumber,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        personnel_number: userData.personnelNumber,
       }
     })
 
@@ -102,8 +102,13 @@ export async function POST(request: Request) {
       .from("employees")
       .insert([
         {
-          ...userData,
+          personnel_number: userData.personnelNumber,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
           email: email,
+          phone: userData.phone,
+          position: userData.position,
+          department: userData.department,
           status: "pending",
           created_by: session.user.id,
           created_at: new Date().toISOString(),
