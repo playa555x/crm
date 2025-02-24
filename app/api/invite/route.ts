@@ -1,4 +1,5 @@
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
@@ -16,7 +17,20 @@ interface InviteRequest {
 }
 
 export async function POST(request: Request) {
+  // Erstelle einen normalen Client für Autorisierungsprüfungen
   const supabase = createRouteHandlerClient({ cookies })
+  
+  // Erstelle einen Service Role Client für administrative Aktionen
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true
+      }
+    }
+  )
 
   try {
     // Überprüfe, ob der anfragende Benutzer ein Admin ist
@@ -62,26 +76,29 @@ export async function POST(request: Request) {
       )
     }
 
-    // Sende die Einladung
-    const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-      data: {
+    // Sende die Einladung mit dem Service Role Client
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.createUser({
+      email: email,
+      email_confirm: true,
+      user_metadata: {
         invited_by: session.user.id,
         role: role,
         firstName: userData.firstName,
         lastName: userData.lastName,
         personnelNumber: userData.personnelNumber,
-      },
+      }
     })
 
     if (inviteError) {
+      console.error('Einladungsfehler:', inviteError)
       return NextResponse.json(
         { error: "Fehler beim Senden der Einladung: " + inviteError.message },
         { status: 500 }
       )
     }
 
-    // Erstelle den Mitarbeitereintrag
-    const { error: employeeError } = await supabase
+    // Erstelle den Mitarbeitereintrag mit dem Service Role Client
+    const { error: employeeError } = await supabaseAdmin
       .from("employees")
       .insert([
         {
@@ -95,8 +112,9 @@ export async function POST(request: Request) {
 
     if (employeeError) {
       // Wenn der Mitarbeitereintrag fehlschlägt, versuche die Einladung rückgängig zu machen
-      await supabase.auth.admin.deleteUser(inviteData.user.id)
+      await supabaseAdmin.auth.admin.deleteUser(inviteData.user.id)
       
+      console.error('Mitarbeitereintragsfehler:', employeeError)
       return NextResponse.json(
         { error: "Fehler beim Erstellen des Mitarbeitereintrags: " + employeeError.message },
         { status: 500 }
