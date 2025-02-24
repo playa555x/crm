@@ -12,7 +12,7 @@ import type { Contact, Company, Deal, MediaItem, Note, Invoice } from "@/types/c
 import { OffersAndOrders } from "./offers-and-orders"
 import { Upload, Trash2 } from "lucide-react"
 import ImageUpload from "@/components/image-upload"
-import Avatar from "@/components/ui/avatar"
+import { Avatar } from "@/components/ui/avatar"
 
 interface ContactDetailsProps {
   id: string
