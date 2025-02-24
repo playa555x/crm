@@ -2,15 +2,15 @@ export type Role = 'Admin' | 'Vertriebsleiter' | 'Vertriebler' | 'Innendienst' |
 
 export interface Employee {
   id: number;
-  personnelNumber: string; // New field for personnel number
-  firstName: string;
-  lastName: string;
+  personnel_number: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string;
   mobile: string;
   position: string;
   department: string;
-  hireDate: string;
+  hire_date: string;
   status: 'active' | 'inactive';
   role: Role;
   avatar?: string;
@@ -60,4 +60,3 @@ export interface Role {
   name: string;
   permissions: string[];
 }
-

@@ -27,7 +27,15 @@ interface AddEmployeeDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-type EmployeeFormData = Database['public']['Tables']['employees']['Insert']
+type EmployeeFormData = {
+  personnel_number: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  position: string;
+  department: string;
+}
 
 export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
@@ -36,10 +44,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
   const onSubmit = async (data: EmployeeFormData) => {
     setIsLoading(true)
     try {
-      // Debug-Log für Formulardaten
       console.log('Form data being submitted:', data)
-
-      // Debug-Log für API-Aufruf
       console.log('Sending invitation to:', data.email)
 
       const response = await fetch("/api/invite", {
@@ -51,9 +56,9 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
           email: data.email,
           role: data.position === "manager" ? "admin" : "user",
           userData: {
-            personnelNumber: data.personnelNumber,
-            firstName: data.firstName,
-            lastName: data.lastName,
+            personnel_number: data.personnel_number,
+            first_name: data.first_name,
+            last_name: data.last_name,
             phone: data.phone,
             position: data.position,
             department: data.department,
@@ -61,7 +66,6 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
         }),
       })
 
-      // Debug-Log für API-Antwort
       const responseData = await response.json()
       console.log('Server response:', responseData)
 
@@ -77,7 +81,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
       reset()
       onOpenChange(false)
     } catch (error) {
-      console.error('Error details:', error) // Debug-Log für Fehler
+      console.error('Error details:', error)
       toast({
         title: "Fehler",
         description: "Beim Hinzufügen des Mitarbeiters ist ein Fehler aufgetreten.",
@@ -100,34 +104,34 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="personnelNumber" className="text-right">
+              <Label htmlFor="personnel_number" className="text-right">
                 Personalnummer
               </Label>
               <Input
-                id="personnelNumber"
+                id="personnel_number"
                 placeholder="z.B. EMP003"
                 className="col-span-3"
-                {...register("personnelNumber", { required: true })}
+                {...register("personnel_number", { required: true })}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="firstName" className="text-right">
+              <Label htmlFor="first_name" className="text-right">
                 Vorname
               </Label>
               <Input
-                id="firstName"
+                id="first_name"
                 className="col-span-3"
-                {...register("firstName", { required: true })}
+                {...register("first_name", { required: true })}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="lastName" className="text-right">
+              <Label htmlFor="last_name" className="text-right">
                 Nachname
               </Label>
               <Input
-                id="lastName"
+                id="last_name"
                 className="col-span-3"
-                {...register("lastName", { required: true })}
+                {...register("last_name", { required: true })}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
