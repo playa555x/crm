@@ -10,9 +10,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { Contact, Company, Deal, MediaItem, Note, Invoice } from "@/types/contact"
 import { OffersAndOrders } from "./offers-and-orders"
-import { Upload, Trash2 } from "lucide-react"
+import { Upload, Trash2 } from 'lucide-react'
 import ImageUpload from "@/components/image-upload"
 import { Avatar } from "@/components/ui/avatar"
+import { NotesList } from "@/components/notes/notes-list"
 
 interface ContactDetailsProps {
   id: string
@@ -23,11 +24,9 @@ export function ContactDetails({ id }: ContactDetailsProps) {
   const [company, setCompany] = useState<Company | null>(null)
   const [deals, setDeals] = useState<Deal[]>([])
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
-  const [notes, setNotes] = useState<Note[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [folders, setFolders] = useState<{ id: string; name: string }[]>([])
   const [newFolderName, setNewFolderName] = useState("")
-  const [newNote, setNewNote] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -37,7 +36,6 @@ export function ContactDetails({ id }: ContactDetailsProps) {
     fetchCompanyData(id)
     fetchDeals(id)
     fetchMediaItems(id)
-    fetchNotes(id)
     fetchInvoices(id)
     fetchFolders(id)
   }, [id])
@@ -91,19 +89,6 @@ export function ContactDetails({ id }: ContactDetailsProps) {
       setMediaItems(data)
     } catch (error) {
       console.error("Error fetching media items:", error)
-    }
-  }
-
-  const fetchNotes = async (id: string) => {
-    try {
-      const response = await fetch(`/api/contacts/${id}/notes`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch notes")
-      }
-      const data = await response.json()
-      setNotes(data)
-    } catch (error) {
-      console.error("Error fetching notes:", error)
     }
   }
 
@@ -191,33 +176,6 @@ export function ContactDetails({ id }: ContactDetailsProps) {
         setMediaItems([...mediaItems, newMediaItem])
       } catch (error) {
         console.error("Error uploading file:", error)
-      }
-    }
-  }
-
-  const handleAddNote = async () => {
-    if (newNote.trim()) {
-      try {
-        const response = await fetch(`/api/contacts/${id}/notes`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: newNote.trim(),
-            isPublic: false,
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to add note")
-        }
-
-        const newNoteItem = await response.json()
-        setNotes([...notes, newNoteItem])
-        setNewNote("")
-      } catch (error) {
-        console.error("Error adding note:", error)
       }
     }
   }
@@ -334,7 +292,7 @@ export function ContactDetails({ id }: ContactDetailsProps) {
       </TabsContent>
 
       <TabsContent value="notes">
-        <Notes notes={notes} newNote={newNote} setNewNote={setNewNote} onAddNote={handleAddNote} />
+        <Notes />
       </TabsContent>
 
       <TabsContent value="invoices">
@@ -505,17 +463,7 @@ function Media({
   )
 }
 
-function Notes({
-  notes,
-  newNote,
-  setNewNote,
-  onAddNote,
-}: {
-  notes: Note[]
-  newNote: string
-  setNewNote: (note: string) => void
-  onAddNote: () => void
-}) {
+function Notes() {
   return (
     <Card>
       <CardHeader>
@@ -523,24 +471,7 @@ function Notes({
         <CardDescription>Notizen zu diesem Kontakt</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
-          <Textarea
-            placeholder="Neue Notiz"
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            className="mb-2"
-          />
-          <Button onClick={onAddNote}>Notiz hinzufügen</Button>
-        </div>
-        {notes.map((note) => (
-          <div key={note.id} className="mb-4 p-4 border rounded">
-            <p>{note.content}</p>
-            <div className="mt-2 text-sm text-gray-500">
-              <span>{note.isPublic ? "Öffentlich" : "Intern"}</span>
-              <span className="ml-4">{note.createdAt}</span>
-            </div>
-          </div>
-        ))}
+        <NotesList />
       </CardContent>
     </Card>
   )
@@ -582,4 +513,3 @@ function Invoices({ invoices }: { invoices: Invoice[] }) {
     </Card>
   )
 }
-
