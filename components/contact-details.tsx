@@ -292,7 +292,7 @@ export function ContactDetails({ id }: ContactDetailsProps) {
       </TabsContent>
 
       <TabsContent value="notes">
-        <Notes />
+ 	 <Notes contactId={contact.id} />
       </TabsContent>
 
       <TabsContent value="invoices">
@@ -463,7 +463,7 @@ function Media({
   )
 }
 
-function Notes() {
+function Notes({ contactId }: { contactId: string }) {
   return (
     <Card>
       <CardHeader>
@@ -471,7 +471,7 @@ function Notes() {
         <CardDescription>Notizen zu diesem Kontakt</CardDescription>
       </CardHeader>
       <CardContent>
-        <NotesList />
+        <NotesList contactId={contactId} />
       </CardContent>
     </Card>
   )

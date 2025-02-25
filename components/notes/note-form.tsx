@@ -38,9 +38,10 @@ interface NoteFormProps {
   contactId?: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function NoteForm({ note, contactId, open, onOpenChange }: NoteFormProps) {
+export function NoteForm({ note, contactId, open, onOpenChange, onSuccess }: NoteFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -77,6 +78,7 @@ export function NoteForm({ note, contactId, open, onOpenChange }: NoteFormProps)
           ? "Die Notiz wurde erfolgreich aktualisiert."
           : "Die Notiz wurde erfolgreich erstellt.",
       })
+      onSuccess?.()
     } catch (error) {
       console.error("Error:", error)
       toast({

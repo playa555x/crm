@@ -10,7 +10,11 @@ import { NoteForm } from "./note-form"
 import type { Note } from "@/types/note"
 import { toast } from "@/components/ui/use-toast"
 
-export function NotesList() {
+interface NotesListProps {
+  contactId?: string
+}
+
+export function NotesList({ contactId }: NotesListProps) {
   const router = useRouter()
   const [notes, setNotes] = useState<Note[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -19,11 +23,11 @@ export function NotesList() {
 
   useEffect(() => {
     fetchNotes()
-  }, [])
+  }, [contactId])
 
   async function fetchNotes() {
     try {
-      const response = await fetch("/api/notes")
+      const response = await fetch(contactId ? `/api/notes?contactId=${contactId}` : "/api/notes")
       if (!response.ok) throw new Error("Fehler beim Laden der Notizen")
       const data = await response.json()
       setNotes(data)
@@ -68,6 +72,10 @@ export function NotesList() {
     }
   }
 
+  const handleNoteAdded = async () => {
+    await fetchNotes()
+  }
+
   if (isLoading) {
     return <div>Lade Notizen...</div>
   }
@@ -100,11 +108,13 @@ export function NotesList() {
 
       <NoteForm
         note={selectedNote}
+        contactId={contactId}
         open={isFormOpen}
         onOpenChange={(open) => {
           setIsFormOpen(open)
           if (!open) setSelectedNote(undefined)
         }}
+        onSuccess={handleNoteAdded}
       />
     </div>
   )
