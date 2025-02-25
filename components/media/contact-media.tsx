@@ -20,17 +20,19 @@ export function ContactMedia({ contactId }: ContactMediaProps) {
     loadMedia()
   }, [contactId])
 
-  async function loadMedia() {
-    try {
-      const response = await fetch(`/api/media?contactId=${contactId}`)
-      const data = await response.json()
-      setMedia(data)
-    } catch (error) {
-      console.error("Error loading media:", error)
-    } finally {
-      setIsLoading(false)
-    }
+async function loadMedia() {
+  try {
+    console.log("Loading media for contact:", contactId)
+    const response = await fetch(`/api/media?contactId=${contactId}`)
+    const data = await response.json()
+    console.log("Received media data:", data)
+    setMedia(data)
+  } catch (error) {
+    console.error("Error loading media:", error)
+  } finally {
+    setIsLoading(false)
   }
+}
 
   async function handleDownload(media: Media) {
     try {

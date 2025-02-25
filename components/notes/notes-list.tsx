@@ -23,7 +23,7 @@ export function NotesList({ contactId }: NotesListProps) {
 
   useEffect(() => {
     fetchNotes()
-  }, [contactId])
+  }, [contactId]) // Re-fetch when contactId changes
 
   async function fetchNotes() {
     try {
@@ -58,7 +58,7 @@ export function NotesList({ contactId }: NotesListProps) {
 
       setNotes(notes.filter(note => note.id !== id))
       toast({
-        title: "Notiz gelöscht",
+        title: "Erfolg",
         description: "Die Notiz wurde erfolgreich gelöscht.",
       })
       router.refresh()
@@ -74,15 +74,20 @@ export function NotesList({ contactId }: NotesListProps) {
 
   const handleNoteAdded = async () => {
     await fetchNotes()
+    router.refresh()
   }
 
   if (isLoading) {
-    return <div>Lade Notizen...</div>
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        Lade Notizen...
+      </div>
+    )
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Notizen</h1>
         <Button onClick={() => setIsFormOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -100,7 +105,7 @@ export function NotesList({ contactId }: NotesListProps) {
           />
         ))}
         {notes.length === 0 && (
-          <div className="col-span-full text-center text-muted-foreground">
+          <div className="col-span-full text-center py-8 text-muted-foreground">
             Keine Notizen vorhanden
           </div>
         )}
