@@ -2,16 +2,19 @@ export type Note = {
   id: string
   title: string
   content: string | null
-  contactId: string | null
-  createdBy: string
-  createdAt: string
-  updatedAt: string
+  contact_id: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
 }
 
-export type CreateNoteInput = {
+export type CreateNoteDTO = {
   title: string
-  content?: string
-  contactId?: string
+  content?: string | null
+  contact_id: string
 }
 
-export type UpdateNoteInput = Partial<CreateNoteInput>
+export type UpdateNoteDTO = {
+  title?: string
+  content?: string | null
+}
