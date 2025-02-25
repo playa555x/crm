@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { ContactForm } from "./contact-form"
 
 export function ContactList() {
@@ -94,17 +95,17 @@ export function ContactList() {
   const filteredContacts = contacts.filter((contact) => {
     const searchTerm = searchQuery.toLowerCase()
     return (
-      contact.firstName.toLowerCase().includes(searchTerm) ||
-      contact.lastName.toLowerCase().includes(searchTerm) ||
-      contact.email.toLowerCase().includes(searchTerm) ||
-      contact.company.toLowerCase().includes(searchTerm) ||
-      contact.customerNumber.toLowerCase().includes(searchTerm)
+      contact.firstName?.toLowerCase().includes(searchTerm) ||
+      contact.lastName?.toLowerCase().includes(searchTerm) ||
+      contact.email?.toLowerCase().includes(searchTerm) ||
+      contact.company?.toLowerCase().includes(searchTerm) ||
+      contact.customerNumber?.toLowerCase().includes(searchTerm)
     )
   })
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-4 border-b">
         <div className="relative flex-1 mr-4">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -121,11 +122,13 @@ export function ContactList() {
               Neu
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Neuer Kontakt</DialogTitle>
             </DialogHeader>
-            <ContactForm onSubmit={handleCreateContact} />
+            <ScrollArea className="max-h-[calc(90vh-8rem)] overflow-y-auto pr-4">
+              <ContactForm onSubmit={handleCreateContact} />
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
@@ -133,7 +136,7 @@ export function ContactList() {
       {loading ? (
         <div className="text-center py-4">Lade Kontakte...</div>
       ) : (
-        <div className="border rounded-lg">
+        <div className="rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
@@ -149,7 +152,7 @@ export function ContactList() {
             <TableBody>
               {filteredContacts.map((contact) => (
                 <TableRow key={contact.id}>
-                  <TableCell>{contact.customerNumber}</TableCell>
+                  <TableCell>{contact.customerNumber || "-"}</TableCell>
                   <TableCell>
                     <Link
                       href={`/contacts/${contact.id}`}
