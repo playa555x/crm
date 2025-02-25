@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow, isValid } from "date-fns"
 import { de } from "date-fns/locale"
 import { MoreHorizontal, Pencil, Trash } from 'lucide-react'
 import Link from "next/link"
@@ -20,6 +20,23 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Kein Datum"
+    
+    const date = new Date(dateString)
+    if (!isValid(date)) return "Ungültiges Datum"
+
+    try {
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: de,
+      })
+    } catch (error) {
+      console.error("Error formatting date:", error)
+      return "Datum nicht verfügbar"
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -56,13 +73,10 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground line-clamp-3">
-          {note.content}
+          {note.content || "Keine Notiz"}
         </p>
         <div className="mt-2 text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(note.createdAt), {
-            addSuffix: true,
-            locale: de,
-          })}
+          {formatDate(note.createdAt)}
         </div>
       </CardContent>
     </Card>
