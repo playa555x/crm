@@ -80,9 +80,9 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("sidebarCollapsed")
-      return saved ? JSON.parse(saved) : false
+      return saved ? JSON.parse(saved) : true
     }
-    return false
+    return true
   })
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { formatDistanceToNow, isValid } from "date-fns"
+import { format, formatDistanceToNow, isValid } from "date-fns"
 import { de } from "date-fns/locale"
 import { MoreHorizontal, Pencil, Trash } from 'lucide-react'
 import Link from "next/link"
@@ -27,15 +27,24 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
     if (!isValid(date)) return "Ungültiges Datum"
 
     try {
-      return formatDistanceToNow(date, {
-        addSuffix: true,
-        locale: de,
-      })
+      return {
+        relative: formatDistanceToNow(date, {
+          addSuffix: true,
+          locale: de,
+        }),
+        absolute: format(date, "dd.MM.yyyy HH:mm", { locale: de })
+      }
     } catch (error) {
       console.error("Error formatting date:", error)
-      return "Datum nicht verfügbar"
+      return {
+        relative: "Datum nicht verfügbar",
+        absolute: "Datum nicht verfügbar"
+      }
     }
   }
+
+  const createdDate = formatDate(note.created_at)
+  const updatedDate = formatDate(note.updated_at)
 
   return (
     <Card>
@@ -76,7 +85,10 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
           {note.content || "Keine Notiz"}
         </p>
         <div className="mt-2 text-xs text-muted-foreground">
-          {formatDate(note.createdAt)}
+          <div title={createdDate.absolute}>Erstellt: {createdDate.relative}</div>
+          {note.updated_at !== note.created_at && (
+            <div title={updatedDate.absolute}>Aktualisiert: {updatedDate.relative}</div>
+          )}
         </div>
       </CardContent>
     </Card>
