@@ -50,19 +50,26 @@ export function NoteForm({ note, contactId, open, onOpenChange, onSuccess }: Not
     defaultValues: {
       title: note?.title || "",
       content: note?.content || "",
-      contactId: contactId || note?.contactId || undefined,
+      contactId: contactId || note?.contact_id || undefined,
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true)
+
+      // Ensure contactId is included in the request
+      const dataToSend = {
+        ...values,
+        contactId: contactId || note?.contact_id,
+      }
+
       const response = await fetch(
         note ? `/api/notes/${note.id}` : "/api/notes",
         {
           method: note ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
+          body: JSON.stringify(dataToSend),
         }
       )
 
