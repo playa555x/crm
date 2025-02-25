@@ -23,8 +23,43 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { ContactForm } from "./contact-form"
+
+// Hilfs-Funktion zur Konvertierung von snake_case zu camelCase
+const snakeToCamelCase = (data: any) => {
+  if (Array.isArray(data)) {
+    return data.map(item => snakeToCamelCase(item))
+  }
+  
+  if (typeof data === 'object' && data !== null) {
+    const newData: any = {}
+    Object.keys(data).forEach(key => {
+      const camelKey = key.replace(/_([a-z])/g, g => g[1].toUpperCase())
+      newData[camelKey] = snakeToCamelCase(data[key])
+    })
+    return newData
+  }
+  
+  return data
+}
+
+// Hilfs-Funktion zur Konvertierung von camelCase zu snake_case
+const camelToSnakeCase = (data: any) => {
+  if (Array.isArray(data)) {
+    return data.map(item => camelToSnakeCase(item))
+  }
+  
+  if (typeof data === 'object' && data !== null) {
+    const newData: any = {}
+    Object.keys(data).forEach(key => {
+      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      newData[snakeKey] = camelToSnakeCase(data[key])
+    })
+    return newData
+  }
+  
+  return data
+}
 
 export function ContactList() {
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -45,7 +80,10 @@ export function ContactList() {
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      setContacts(data || [])
+      
+      // Konvertiere snake_case zu camelCase
+      const convertedData = snakeToCamelCase(data) as Contact[]
+      setContacts(convertedData || [])
     } catch (error) {
       console.error("Error fetching contacts:", error)
     } finally {
@@ -55,14 +93,19 @@ export function ContactList() {
 
   const handleCreateContact = async (newContact: Partial<Contact>) => {
     try {
+      // Konvertiere zu snake_case für Supabase
+      const contactData = camelToSnakeCase(newContact)
+
       const { data, error } = await supabase
         .from("contacts")
-        .insert([newContact])
+        .insert([contactData])
         .select()
 
       if (error) throw error
 
-      setContacts([data[0], ...contacts])
+      // Konvertiere zurück zu camelCase
+      const convertedData = snakeToCamelCase(data[0]) as Contact
+      setContacts([convertedData, ...contacts])
       setIsDialogOpen(false)
     } catch (error) {
       console.error("Error creating contact:", error)
@@ -104,9 +147,9 @@ export function ContactList() {
   })
 
   return (
-    <div className="space-y-4">
+    <div>
       <div className="flex items-center justify-between p-4 border-b">
-        <div className="relative flex-1 mr-4">
+        <div className="relative flex-1 mr-4 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Kontakte durchsuchen..."
@@ -117,36 +160,36 @@ export function ContactList() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button>
               <Plus className="h-4 w-4 mr-2" />
               Neu
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>Neuer Kontakt</DialogTitle>
             </DialogHeader>
-            <ScrollArea className="max-h-[calc(90vh-8rem)] overflow-y-auto pr-4">
+            <div className="max-h-[calc(100vh-10rem)] overflow-y-auto pr-6">
               <ContactForm onSubmit={handleCreateContact} />
-            </ScrollArea>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {loading ? (
-        <div className="text-center py-4">Lade Kontakte...</div>
-      ) : (
-        <div className="rounded-lg">
+      <div className="relative overflow-x-auto">
+        {loading ? (
+          <div className="text-center py-8">Lade Kontakte...</div>
+        ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Kundennr.</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Unternehmen</TableHead>
-                <TableHead>E-Mail</TableHead>
-                <TableHead>Telefon</TableHead>
-                <TableHead>Kategorie</TableHead>
-                <TableHead>Nächster Kontakt</TableHead>
+                <TableHead className="w-[120px]">Kundennr.</TableHead>
+                <TableHead className="w-[200px]">Name</TableHead>
+                <TableHead className="w-[200px]">Unternehmen</TableHead>
+                <TableHead className="w-[200px]">E-Mail</TableHead>
+                <TableHead className="w-[150px]">Telefon</TableHead>
+                <TableHead className="w-[120px]">Kategorie</TableHead>
+                <TableHead className="w-[150px]">Stadt</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -165,12 +208,7 @@ export function ContactList() {
                   <TableCell>{contact.email || "-"}</TableCell>
                   <TableCell>{contact.phone || contact.mobile || "-"}</TableCell>
                   <TableCell>{getCategoryBadge(contact.category)}</TableCell>
-                  <TableCell>
-                    {contact.nextFollowUp 
-                      ? new Date(contact.nextFollowUp).toLocaleDateString('de-DE')
-                      : "-"
-                    }
-                  </TableCell>
+                  <TableCell>{contact.city || "-"}</TableCell>
                 </TableRow>
               ))}
               {filteredContacts.length === 0 && (
@@ -182,8 +220,8 @@ export function ContactList() {
               )}
             </TableBody>
           </Table>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
