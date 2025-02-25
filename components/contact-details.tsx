@@ -10,10 +10,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { Contact, Company, Deal, MediaItem, Note, Invoice } from "@/types/contact"
 import { OffersAndOrders } from "./offers-and-orders"
-import { Upload, Trash2 } from 'lucide-react'
+import { Upload } from 'lucide-react'
 import ImageUpload from "@/components/image-upload"
 import { Avatar } from "@/components/ui/avatar"
 import { NotesList } from "@/components/notes/notes-list"
+import { ContactMedia } from "@/components/media/contact-media" // Neue Import-Zeile
 
 interface ContactDetailsProps {
   id: string
@@ -23,10 +24,7 @@ export function ContactDetails({ id }: ContactDetailsProps) {
   const [contact, setContact] = useState<Contact | null>(null)
   const [company, setCompany] = useState<Company | null>(null)
   const [deals, setDeals] = useState<Deal[]>([])
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [folders, setFolders] = useState<{ id: string; name: string }[]>([])
-  const [newFolderName, setNewFolderName] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -35,9 +33,7 @@ export function ContactDetails({ id }: ContactDetailsProps) {
     // Fetch related data
     fetchCompanyData(id)
     fetchDeals(id)
-    fetchMediaItems(id)
     fetchInvoices(id)
-    fetchFolders(id)
   }, [id])
 
   const fetchContactData = async (id: string) => {
@@ -79,19 +75,6 @@ export function ContactDetails({ id }: ContactDetailsProps) {
     }
   }
 
-  const fetchMediaItems = async (id: string) => {
-    try {
-      const response = await fetch(`/api/contacts/${id}/media`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch media items")
-      }
-      const data = await response.json()
-      setMediaItems(data)
-    } catch (error) {
-      console.error("Error fetching media items:", error)
-    }
-  }
-
   const fetchInvoices = async (id: string) => {
     try {
       const response = await fetch(`/api/contacts/${id}/invoices`)
@@ -102,81 +85,6 @@ export function ContactDetails({ id }: ContactDetailsProps) {
       setInvoices(data)
     } catch (error) {
       console.error("Error fetching invoices:", error)
-    }
-  }
-
-  const fetchFolders = async (id: string) => {
-    try {
-      const response = await fetch(`/api/contacts/${id}/folders`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch folders")
-      }
-      const data = await response.json()
-      setFolders(data)
-    } catch (error) {
-      console.error("Error fetching folders:", error)
-    }
-  }
-
-  const handleAddFolder = async () => {
-    if (newFolderName.trim()) {
-      try {
-        const response = await fetch(`/api/contacts/${id}/folders`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: newFolderName.trim() }),
-        })
-        if (!response.ok) {
-          throw new Error("Failed to add folder")
-        }
-        const newFolder = await response.json()
-        setFolders([...folders, newFolder])
-        setNewFolderName("")
-      } catch (error) {
-        console.error("Error adding folder:", error)
-      }
-    }
-  }
-
-  const handleRemoveFolder = async (folderId: string) => {
-    try {
-      const response = await fetch(`/api/contacts/${id}/folders/${folderId}`, {
-        method: "DELETE",
-      })
-      if (!response.ok) {
-        throw new Error("Failed to remove folder")
-      }
-      setFolders(folders.filter((folder) => folder.id !== folderId))
-      setMediaItems(mediaItems.filter((item) => item.folderId !== folderId))
-    } catch (error) {
-      console.error("Error removing folder:", error)
-    }
-  }
-
-  const handleFileUpload = async (folderId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      try {
-        const formData = new FormData()
-        formData.append("file", file)
-        formData.append("folderId", folderId)
-
-        const response = await fetch(`/api/contacts/${id}/media`, {
-          method: "POST",
-          body: formData,
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to upload file")
-        }
-
-        const newMediaItem = await response.json()
-        setMediaItems([...mediaItems, newMediaItem])
-      } catch (error) {
-        console.error("Error uploading file:", error)
-      }
     }
   }
 
@@ -280,19 +188,11 @@ export function ContactDetails({ id }: ContactDetailsProps) {
       </TabsContent>
 
       <TabsContent value="media">
-        <Media
-          mediaItems={mediaItems}
-          folders={folders}
-          onAddFolder={handleAddFolder}
-          onRemoveFolder={handleRemoveFolder}
-          onFileUpload={handleFileUpload}
-          newFolderName={newFolderName}
-          setNewFolderName={setNewFolderName}
-        />
+        <Media contactId={contact.id} />
       </TabsContent>
 
       <TabsContent value="notes">
- 	 <Notes contactId={contact.id} />
+        <Notes contactId={contact.id} />
       </TabsContent>
 
       <TabsContent value="invoices">
@@ -375,89 +275,16 @@ function Deals({ deals }: { deals: Deal[] }) {
   )
 }
 
-function Media({
-  mediaItems,
-  folders,
-  onAddFolder,
-  onRemoveFolder,
-  onFileUpload,
-  newFolderName,
-  setNewFolderName,
-}: {
-  mediaItems: MediaItem[]
-  folders: { id: string; name: string }[]
-  onAddFolder: () => void
-  onRemoveFolder: (folderId: string) => void
-  onFileUpload: (folderId: string, event: React.ChangeEvent<HTMLInputElement>) => void
-  newFolderName: string
-  setNewFolderName: (name: string) => void
-}) {
+// NEUE Media-Komponente
+function Media({ contactId }: { contactId: string }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Mediathek</CardTitle>
-        <CardDescription>Dokumente und Dateien für diesen Kontakt</CardDescription>
+        <CardDescription>Dateien zu diesem Kontakt</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
-          <Input
-            placeholder="Neuer Ordner"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            className="mb-2"
-          />
-          <Button onClick={onAddFolder}>Ordner hinzufügen</Button>
-        </div>
-        {folders.map((folder) => (
-          <div key={folder.id} className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold">{folder.name}</h3>
-              <Button variant="destructive" size="sm" onClick={() => onRemoveFolder(folder.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Typ</TableHead>
-                  <TableHead>Aktion</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mediaItems
-                  .filter((item) => item.folderId === folder.id)
-                  .map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.type}</TableCell>
-                      <TableCell>
-                        <Button variant="link" asChild>
-                          <a href={item.url} target="_blank" rel="noopener noreferrer">
-                            Öffnen
-                          </a>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-            <div className="mt-2">
-              <Input
-                type="file"
-                onChange={(e) => onFileUpload(folder.id, e)}
-                className="hidden"
-                id={`file-upload-${folder.id}`}
-              />
-              <label htmlFor={`file-upload-${folder.id}`}>
-                <Button as="span">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Datei hochladen
-                </Button>
-              </label>
-            </div>
-          </div>
-        ))}
+        <ContactMedia contactId={contactId} />
       </CardContent>
     </Card>
   )
