@@ -62,6 +62,10 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
       const title = formData.get("title") as string
       const description = formData.get("description") as string
 
+      if (!title) {
+        throw new Error("Titel ist erforderlich")
+      }
+
       if (media) {
         // Update existing media
         const { error } = await fetch(`/api/media/${media.id}`, {
@@ -149,13 +153,19 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
           </div>
           <div className="space-y-2">
             <Label htmlFor="folder">Ordner</Label>
-            <Select value={selectedFolderId || undefined} onValueChange={(value) => setSelectedFolderId(value)}>
-              <SelectTrigger>
+            <Select
+              name="folder"
+              value={selectedFolderId || undefined}
+              onValueChange={(value) => {
+                setSelectedFolderId(value)
+              }}
+            >
+              <SelectTrigger id="folder" onClick={(e) => e.preventDefault()}>
                 <SelectValue placeholder="Ordner auswählen" />
               </SelectTrigger>
               <SelectContent>
                 {folders.map((folder) => (
-                  <SelectItem key={folder.id} value={folder.id}>
+                  <SelectItem key={folder.id} value={folder.id} onSelect={(e) => e.preventDefault()}>
                     {folder.name}
                   </SelectItem>
                 ))}
@@ -165,7 +175,16 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
           {!media && (
             <div className="space-y-2">
               <Label htmlFor="file">Datei</Label>
-              <Input id="file" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
+              <Input
+                id="file"
+                name="file"
+                type="file"
+                onChange={(e) => {
+                  e.preventDefault()
+                  setFile(e.target.files?.[0] || null)
+                }}
+                required
+              />
             </div>
           )}
           <div className="flex justify-end gap-2">
