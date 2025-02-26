@@ -1,24 +1,16 @@
+"use client"
+
 import { useState } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
-import { MoreHorizontal, Pencil, Trash, Download } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash, Download, FileText, ImageIcon, File } from "lucide-react"
 import Image from "next/image"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Media } from "@/types/media"
 
 interface MediaCardProps {
@@ -32,28 +24,29 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
   const [previewOpen, setPreviewOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
   const supabase = createClientComponentClient()
-  
-  const isImage = media.file_type === 'image'
-  const isPDF = media.mime_type === 'application/pdf'
-  
+
+  const isImage = media.file_type === "image"
+  const isPDF = media.mime_type === "application/pdf"
+
   // Get public URL for the file
-  const { data } = supabase.storage.from('media').getPublicUrl(media.file_path)
+  const { data } = supabase.storage.from("media").getPublicUrl(media.file_path)
   const publicUrl = data?.publicUrl
 
-  // Fallback URL wenn keine public URL verfügbar
-  const imageUrl = !imageError && publicUrl ? publicUrl : "/placeholder.svg"
+  // Bestimme das passende Icon basierend auf dem Dateityp
+  const FileTypeIcon = () => {
+    if (isImage) return <ImageIcon className="h-12 w-12 text-muted-foreground" />
+    if (isPDF) return <FileText className="h-12 w-12 text-muted-foreground" />
+    return <File className="h-12 w-12 text-muted-foreground" />
+  }
 
   return (
     <>
       <Card className="overflow-hidden">
         <CardHeader className="p-0">
-          <div 
-            className="relative aspect-video cursor-pointer" 
-            onClick={() => setPreviewOpen(true)}
-          >
-            {isImage ? (
+          <div className="relative aspect-video cursor-pointer bg-muted" onClick={() => setPreviewOpen(true)}>
+            {isImage && publicUrl ? (
               <Image
-                src={imageUrl || "/placeholder.svg"}
+                src={publicUrl || "/placeholder.svg"}
                 alt={media.title}
                 fill
                 className="object-cover"
@@ -63,10 +56,8 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
                 loading="lazy"
               />
             ) : (
-              <div className="relative aspect-video bg-muted flex items-center justify-center">
-                <span className="text-muted-foreground uppercase">
-                  {media.file_type}
-                </span>
+              <div className="h-full w-full flex items-center justify-center">
+                <FileTypeIcon />
               </div>
             )}
           </div>
@@ -75,9 +66,7 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-semibold">{media.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {media.description || "Keine Beschreibung"}
-              </p>
+              <p className="text-sm text-muted-foreground">{media.description || "Keine Beschreibung"}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -111,7 +100,8 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0 text-xs text-muted-foreground">
-          Hochgeladen {formatDistanceToNow(new Date(media.created_at), {
+          Hochgeladen{" "}
+          {formatDistanceToNow(new Date(media.created_at), {
             addSuffix: true,
             locale: de,
           })}
@@ -122,11 +112,12 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>{media.title}</DialogTitle>
+            <DialogDescription>{media.description || "Keine Beschreibung verfügbar"}</DialogDescription>
           </DialogHeader>
-          {isImage ? (
+          {isImage && publicUrl ? (
             <div className="relative aspect-video">
               <Image
-                src={imageUrl || "/placeholder.svg"}
+                src={publicUrl || "/placeholder.svg"}
                 alt={media.title}
                 fill
                 className="object-contain"
@@ -135,17 +126,17 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
                 priority
               />
             </div>
-          ) : isPDF ? (
-            <iframe
-              src={publicUrl}
-              className="w-full h-[80vh]"
-              title={media.title}
-            />
+          ) : isPDF && publicUrl ? (
+            <iframe src={publicUrl} className="w-full h-[80vh]" title={media.title} />
           ) : (
             <div className="text-center py-8">
-              <p>Vorschau nicht verfügbar</p>
-              <Button onClick={() => onDownload(media)} className="mt-4">
-                Herunterladen
+              <div className="flex justify-center mb-4">
+                <FileTypeIcon />
+              </div>
+              <p className="mb-4 text-muted-foreground">Vorschau nicht verfügbar für diesen Dateityp</p>
+              <Button onClick={() => onDownload(media)}>
+                <Download className="mr-2 h-4 w-4" />
+                Datei herunterladen
               </Button>
             </div>
           )}
@@ -154,3 +145,4 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
     </>
   )
 }
+
