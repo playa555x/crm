@@ -26,9 +26,9 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [folders, setFolders] = useState<Folder[]>([])
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(folderId || null)
 
   useEffect(() => {
     if (contactId) {
@@ -66,7 +66,7 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
 
       if (media) {
         // Update existing media
-        const { error } = await fetch(`/api/media/${media.id}`, {
+        const response = await fetch(`/api/media/${media.id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -76,29 +76,33 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
             description,
             folder_id: selectedFolderId,
           }),
-        }).then((res) => res.json())
+        })
 
-        if (error) throw error
-      } else if (file) {
+        if (!response.ok) {
+          throw new Error("Fehler beim Aktualisieren der Mediendatei")
+        }
+      } else if (selectedFile) {
         // Validate file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
+        if (selectedFile.size > 10 * 1024 * 1024) {
           throw new Error("Datei zu groß (max. 10MB)")
         }
 
         // Create structured file path
-        const fileExt = file.name.split(".").pop()
+        const fileExt = selectedFile.name.split(".").pop()
         const fileName = `${contactId}/${selectedFolderId || "uncategorized"}/${Date.now()}.${fileExt}`
 
         // 1. Upload file to Supabase Storage
-        const { error: uploadError } = await supabase.storage.from("media").upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false,
-        })
+        const { error: uploadError } = await supabase.storage
+          .from("media")
+          .upload(fileName, selectedFile, {
+            cacheControl: "3600",
+            upsert: false,
+          })
 
         if (uploadError) throw uploadError
 
         // 2. Create database entry
-        const { error: dbError } = await fetch("/api/media", {
+        const response = await fetch("/api/media", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -107,15 +111,17 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
             title,
             description,
             file_path: fileName,
-            file_type: file.type.split("/")[0],
-            mime_type: file.type,
-            size: file.size,
+            file_type: selectedFile.type.split("/")[0],
+            mime_type: selectedFile.type,
+            size: selectedFile.size,
             contactId: contactId,
             folderId: selectedFolderId,
           }),
-        }).then((res) => res.json())
+        })
 
-        if (dbError) throw dbError
+        if (!response.ok) {
+          throw new Error("Fehler beim Erstellen des Medieneintrags")
+        }
       }
 
       onSuccess?.()
@@ -151,8 +157,8 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
           </div>
           <div className="space-y-2">
             <Label htmlFor="folder">Ordner</Label>
-            <Select defaultValue={selectedFolderId || undefined} onValueChange={setSelectedFolderId}>
-              <SelectTrigger className="w-full">
+            <Select value={selectedFolderId || undefined} onValueChange={setSelectedFolderId}>
+              <SelectTrigger id="folder" className="w-full">
                 <SelectValue placeholder="Ordner auswählen" />
               </SelectTrigger>
               <SelectContent>
@@ -171,7 +177,7 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
                 id="file"
                 name="file"
                 type="file"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                 required
               />
             </div>
@@ -189,4 +195,3 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
     </Dialog>
   )
 }
-
