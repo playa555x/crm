@@ -6,6 +6,7 @@ import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,8 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
   const [previewOpen, setPreviewOpen] = useState(false)
   const isImage = media.file_type === 'image'
   const isPDF = media.mime_type === 'application/pdf'
+  const supabase = createClientComponentClient()
+  const imageUrl = media.file_path ? supabase.storage.from('media').getPublicUrl(media.file_path).data.publicUrl : "/placeholder.svg"
 
   return (
     <>
@@ -39,12 +42,12 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
             onClick={() => setPreviewOpen(true)}
           >
             {isImage ? (
-              <Image
-                src={media.file_path || "/placeholder.svg"}
-                alt={media.title}
-                fill
-                className="object-cover"
-              />
+				<Image
+					src={imageUrl || "/placeholder.svg"}
+					alt={media.title}
+					fill
+					className="object-cover"
+				/>
             ) : (
               <div className="relative aspect-video bg-muted flex items-center justify-center">
                 <span className="text-muted-foreground uppercase">
@@ -105,12 +108,12 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
         <DialogContent className="max-w-4xl">
           {isImage ? (
             <div className="relative aspect-video">
-              <Image
-                src={media.file_path || "/placeholder.svg"}
-                alt={media.title}
-                fill
-                className="object-contain"
-              />
+				<Image
+					src={imageUrl || "/placeholder.svg"}
+					alt={media.title}
+					fill
+					className="object-contain"
+			/>
             </div>
           ) : isPDF ? (
             <iframe
