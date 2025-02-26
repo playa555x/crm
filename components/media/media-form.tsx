@@ -12,21 +12,49 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { Media } from "@/types/media"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { Media, Folder } from "@/types/media"
+import { useEffect } from "react"
 
 interface MediaFormProps {
   media?: Media
   contactId?: string
+  folderId?: string | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
 }
 
-export function MediaForm({ media, contactId, open, onOpenChange, onSuccess }: MediaFormProps) {
+export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSuccess }: MediaFormProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [folders, setFolders] = useState<Folder[]>([])
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(folderId || null)
+
+  useEffect(() => {
+    if (contactId) {
+      loadFolders()
+    }
+  }, [contactId])
+
+  async function loadFolders() {
+    try {
+      const response = await fetch(`/api/folders?contactId=${contactId}`)
+      if (!response.ok) throw new Error("Failed to load folders")
+      const data = await response.json()
+      setFolders(data)
+    } catch (error) {
+      console.error("Error loading folders:", error)
+    }
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -47,6 +75,7 @@ export function MediaForm({ media, contactId, open, onOpenChange, onSuccess }: M
           body: JSON.stringify({
             title,
             description,
+            folder_id: selectedFolderId
           }),
         }).then(res => res.json())
 
@@ -78,6 +107,7 @@ export function MediaForm({ media, contactId, open, onOpenChange, onSuccess }: M
             mime_type: file.type,
             size: file.size,
             contactId: contactId,
+            folderId: selectedFolderId
           }),
         }).then(res => res.json())
 
@@ -120,6 +150,24 @@ export function MediaForm({ media, contactId, open, onOpenChange, onSuccess }: M
               name="description"
               defaultValue={media?.description || ""}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="folder">Ordner</Label>
+            <Select
+              value={selectedFolderId || undefined}
+              onValueChange={(value) => setSelectedFolderId(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Ordner auswählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {folders.map((folder) => (
+                  <SelectItem key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {!media && (
             <div className="space-y-2">

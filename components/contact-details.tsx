@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { ArrowLeft } from 'lucide-react' // Neuer Import für den Zurück-Pfeil
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,7 +15,7 @@ import { Upload } from 'lucide-react'
 import ImageUpload from "@/components/image-upload"
 import { Avatar } from "@/components/ui/avatar"
 import { NotesList } from "@/components/notes/notes-list"
-import { ContactMedia } from "@/components/media/contact-media" // Neue Import-Zeile
+import { ContactMedia } from "@/components/media/contact-media"
 
 interface ContactDetailsProps {
   id: string
@@ -28,9 +29,7 @@ export function ContactDetails({ id }: ContactDetailsProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    // Fetch contact data
     fetchContactData(id)
-    // Fetch related data
     fetchCompanyData(id)
     fetchDeals(id)
     fetchInvoices(id)
@@ -115,93 +114,108 @@ export function ContactDetails({ id }: ContactDetailsProps) {
   }
 
   return (
-    <Tabs defaultValue="general" className="w-full">
-      <TabsList>
-        <TabsTrigger value="general">Allgemeine Infos</TabsTrigger>
-        <TabsTrigger value="company">Unternehmen</TabsTrigger>
-        <TabsTrigger value="deals">Geschäfte</TabsTrigger>
-        <TabsTrigger value="media">Mediathek</TabsTrigger>
-        <TabsTrigger value="notes">Notizen</TabsTrigger>
-        <TabsTrigger value="invoices">Rechnungen</TabsTrigger>
-        <TabsTrigger value="offers-orders">Angebote & Aufträge</TabsTrigger>
-      </TabsList>
+    <div>
+      {/* Neuer Zurück-Button */}
+      <div className="mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => window.history.back()}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Zurück
+        </Button>
+      </div>
 
-      <TabsContent value="general">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-4">
-              <Avatar id={id} name={`${contact.firstName} ${contact.lastName}`} imageUrl={avatarUrl || undefined} />
-              <div>
-                <CardTitle>Kontaktinformationen</CardTitle>
-                <CardDescription>Allgemeine Informationen über den Kontakt</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <ImageUpload onUpload={handleImageUpload} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" value={`${contact.firstName} ${contact.lastName}`} readOnly />
-              </div>
-              <div>
-                <Label htmlFor="email">E-Mail</Label>
-                <Input id="email" value={contact.email} readOnly />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefon</Label>
-                <Input id="phone" value={contact.phone} readOnly />
-              </div>
-              <div>
-                <Label htmlFor="mobile">Mobil</Label>
-                <Input id="mobile" value={contact.mobile} readOnly />
-              </div>
-              <div>
-                <Label htmlFor="position">Position</Label>
-                <Input id="position" value={contact.position} readOnly />
-              </div>
-              <div>
-                <Label htmlFor="address">Adresse</Label>
-                <Input id="address" value={`${contact.street}, ${contact.postcode} ${contact.city}`} readOnly />
-              </div>
-              <div>
-                <Label htmlFor="website">Website</Label>
-                <Input id="website" value={contact.website} readOnly />
-              </div>
-              <div>
-                <Label htmlFor="responsibleEmployee">Zuständiger Mitarbeiter</Label>
-                <Input id="responsibleEmployee" value={contact.responsibleEmployee} readOnly />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList>
+          <TabsTrigger value="general">Allgemeine Infos</TabsTrigger>
+          <TabsTrigger value="company">Unternehmen</TabsTrigger>
+          <TabsTrigger value="deals">Geschäfte</TabsTrigger>
+          <TabsTrigger value="media">Mediathek</TabsTrigger>
+          <TabsTrigger value="notes">Notizen</TabsTrigger>
+          <TabsTrigger value="invoices">Rechnungen</TabsTrigger>
+          <TabsTrigger value="offers-orders">Angebote & Aufträge</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="company">
-        <CompanyInfo company={company} />
-      </TabsContent>
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <Avatar id={id} name={`${contact.firstName} ${contact.lastName}`} imageUrl={avatarUrl || undefined} />
+                <div>
+                  <CardTitle>Kontaktinformationen</CardTitle>
+                  <CardDescription>Allgemeine Informationen über den Kontakt</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <ImageUpload onUpload={handleImageUpload} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" value={`${contact.firstName} ${contact.lastName}`} readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="email">E-Mail</Label>
+                  <Input id="email" value={contact.email} readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Telefon</Label>
+                  <Input id="phone" value={contact.phone} readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="mobile">Mobil</Label>
+                  <Input id="mobile" value={contact.mobile} readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="position">Position</Label>
+                  <Input id="position" value={contact.position} readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="address">Adresse</Label>
+                  <Input id="address" value={`${contact.street}, ${contact.postcode} ${contact.city}`} readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="website">Website</Label>
+                  <Input id="website" value={contact.website} readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="responsibleEmployee">Zuständiger Mitarbeiter</Label>
+                  <Input id="responsibleEmployee" value={contact.responsibleEmployee} readOnly />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <TabsContent value="deals">
-        <Deals deals={deals} />
-      </TabsContent>
+        <TabsContent value="company">
+          <CompanyInfo company={company} />
+        </TabsContent>
 
-      <TabsContent value="media">
-        <Media contactId={contact.id} />
-      </TabsContent>
+        <TabsContent value="deals">
+          <Deals deals={deals} />
+        </TabsContent>
 
-      <TabsContent value="notes">
-        <Notes contactId={contact.id} />
-      </TabsContent>
+        <TabsContent value="media">
+          <Media contactId={contact.id} />
+        </TabsContent>
 
-      <TabsContent value="invoices">
-        <Invoices invoices={invoices} />
-      </TabsContent>
-      <TabsContent value="offers-orders">
-        <OffersAndOrders id={contact.id.toString()} />
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="notes">
+          <Notes contactId={contact.id} />
+        </TabsContent>
+
+        <TabsContent value="invoices">
+          <Invoices invoices={invoices} />
+        </TabsContent>
+
+        <TabsContent value="offers-orders">
+          <OffersAndOrders id={contact.id.toString()} />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
 
@@ -275,7 +289,6 @@ function Deals({ deals }: { deals: Deal[] }) {
   )
 }
 
-// NEUE Media-Komponente
 function Media({ contactId }: { contactId: string }) {
   return (
     <Card>
@@ -340,3 +353,5 @@ function Invoices({ invoices }: { invoices: Invoice[] }) {
     </Card>
   )
 }
+
+export default ContactDetails

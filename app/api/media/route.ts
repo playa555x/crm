@@ -9,6 +9,7 @@ export async function GET(request: Request) {
     const supabase = createRouteHandlerClient({ cookies })
     const { searchParams } = new URL(request.url)
     const contactId = searchParams.get('contactId')
+    const folderId = searchParams.get('folderId')
 
     let query = supabase
       .from("media")
@@ -17,6 +18,10 @@ export async function GET(request: Request) {
 
     if (contactId) {
       query = query.eq("contact_id", contactId)
+    }
+
+    if (folderId) {
+      query = query.eq("folder_id", folderId)
     }
 
     const { data: media, error } = await query
@@ -48,11 +53,12 @@ export async function POST(request: Request) {
       )
     }
 
-    // Transform contactId to contact_id for database
-    const { contactId, ...rest } = json
+    // Transform contactId and folderId for database
+    const { contactId, folderId, ...rest } = json
     const mediaData = {
       ...rest,
       contact_id: contactId,
+      folder_id: folderId,
       created_by: user.id,
     }
 
