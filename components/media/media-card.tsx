@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
-import { MoreHorizontal, Pencil, Trash, Download, FileText, ImageIcon, File } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash, Download, FileText, ImageIcon, File } from 'lucide-react'
 import Image from "next/image"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
@@ -23,43 +23,70 @@ interface MediaCardProps {
 export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProps) {
   const [previewOpen, setPreviewOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const supabase = createClientComponentClient()
 
   const isImage = media.file_type === "image"
   const isPDF = media.mime_type === "application/pdf"
 
-  // Get public URL for the file
-  const { data } = supabase.storage.from("media").getPublicUrl(media.file_path)
-  const publicUrl = data?.publicUrl
+  useEffect(() => {
+    const loadImageUrl = async () => {
+      try {
+        const { data } = await supabase.storage
+          .from("media")
+          .createSignedUrl(media.file_path, 3600 * 24) // URL gültig für 24 Stunden statt 1 Stunde
 
-  // Bestimme das passende Icon basierend auf dem Dateityp
+        if (data?.signedUrl) {
+          setImageUrl(data.signedUrl)
+        }
+      } catch (error) {
+        console.error("Error loading image URL:", error)
+        setImageError(true)
+      }
+    }
+
+    if (isImage || isPDF) {
+      loadImageUrl()
+    }
+  }, [media.file_path, isImage, isPDF, supabase])
+
   const FileTypeIcon = () => {
     if (isImage) return <ImageIcon className="h-12 w-12 text-muted-foreground" />
     if (isPDF) return <FileText className="h-12 w-12 text-muted-foreground" />
     return <File className="h-12 w-12 text-muted-foreground" />
   }
 
+  const renderPreview = () => {
+    if (isImage && imageUrl && !imageError) {
+      return (
+        <Image
+          src={imageUrl || "/placeholder.svg"}
+          alt={media.title}
+          fill
+          className="object-cover"
+          onError={() => setImageError(true)}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={false}
+          loading="lazy"
+        />
+      )
+    }
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <FileTypeIcon />
+      </div>
+    )
+  }
+
   return (
     <>
       <Card className="overflow-hidden">
         <CardHeader className="p-0">
-          <div className="relative aspect-video cursor-pointer bg-muted" onClick={() => setPreviewOpen(true)}>
-            {isImage && publicUrl ? (
-              <Image
-                src={publicUrl || "/placeholder.svg"}
-                alt={media.title}
-                fill
-                className="object-cover"
-                onError={() => setImageError(true)}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                priority={false}
-                loading="lazy"
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center">
-                <FileTypeIcon />
-              </div>
-            )}
+          <div 
+            className="relative aspect-video cursor-pointer bg-muted" 
+            onClick={() => setPreviewOpen(true)}
+          >
+            {renderPreview()}
           </div>
         </CardHeader>
         <CardContent className="p-4">
@@ -114,10 +141,10 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
             <DialogTitle>{media.title}</DialogTitle>
             <DialogDescription>{media.description || "Keine Beschreibung verfügbar"}</DialogDescription>
           </DialogHeader>
-          {isImage && publicUrl ? (
+          {isImage && imageUrl && !imageError ? (
             <div className="relative aspect-video">
               <Image
-                src={publicUrl || "/placeholder.svg"}
+                src={imageUrl || "/placeholder.svg"}
                 alt={media.title}
                 fill
                 className="object-contain"
@@ -126,8 +153,8 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
                 priority
               />
             </div>
-          ) : isPDF && publicUrl ? (
-            <iframe src={publicUrl} className="w-full h-[80vh]" title={media.title} />
+          ) : isPDF && imageUrl ? (
+            <iframe src={imageUrl} className="w-full h-[80vh]" title={media.title} />
           ) : (
             <div className="text-center py-8">
               <div className="flex justify-center mb-4">
@@ -145,4 +172,3 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
     </>
   )
 }
-
