@@ -30,14 +30,33 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Nicht autorisiert" },
         { status: 401 }
       )
     }
 
-    // Add created_by and timestamps
+    // Convert camelCase to snake_case for database
     const contactData = {
-      ...contact,
+      first_name: contact.firstName,
+      last_name: contact.lastName,
+      email: contact.email,
+      phone: contact.phone,
+      mobile: contact.mobile,
+      company: contact.company,
+      position: contact.position,
+      street: contact.street,
+      house_number: contact.houseNumber,
+      postcode: contact.postcode,
+      city: contact.city,
+      website: contact.website,
+      notes: contact.notes,
+      responsible_employee: contact.responsibleEmployee,
+      category: contact.category,
+      company_contact_person: contact.companyContactPerson,
+      preferred_contact_method: contact.preferredContactMethod,
+      preferred_contact_person: contact.preferredContactPerson,
+      customer_number: contact.customerNumber,
+      project_description: contact.projectDescription,
       created_by: user.id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -58,7 +77,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Interner Server Fehler" },
       { status: 500 }
     )
   }

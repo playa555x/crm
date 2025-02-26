@@ -3,10 +3,10 @@ import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
 import { MoreHorizontal, Pencil, Trash, Download } from 'lucide-react'
 import Image from "next/image"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import {
   Dialog,
   DialogContent,
@@ -28,10 +28,16 @@ interface MediaCardProps {
 
 export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProps) {
   const [previewOpen, setPreviewOpen] = useState(false)
+  const supabase = createClientComponentClient()
+  
   const isImage = media.file_type === 'image'
   const isPDF = media.mime_type === 'application/pdf'
-  const supabase = createClientComponentClient()
-  const imageUrl = media.file_path ? supabase.storage.from('media').getPublicUrl(media.file_path).data.publicUrl : "/placeholder.svg"
+  
+  // Get public URL for the file
+  const { data: { publicUrl } } = supabase
+    .storage
+    .from('media')
+    .getPublicUrl(media.file_path)
 
   return (
     <>
@@ -42,12 +48,12 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
             onClick={() => setPreviewOpen(true)}
           >
             {isImage ? (
-				<Image
-					src={imageUrl || "/placeholder.svg"}
-					alt={media.title}
-					fill
-					className="object-cover"
-				/>
+              <Image
+                src={publicUrl || "/placeholder.svg"}
+                alt={media.title}
+                fill
+                className="object-cover"
+              />
             ) : (
               <div className="relative aspect-video bg-muted flex items-center justify-center">
                 <span className="text-muted-foreground uppercase">
@@ -108,16 +114,16 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
         <DialogContent className="max-w-4xl">
           {isImage ? (
             <div className="relative aspect-video">
-				<Image
-					src={imageUrl || "/placeholder.svg"}
-					alt={media.title}
-					fill
-					className="object-contain"
-			/>
+              <Image
+                src={publicUrl || "/placeholder.svg"}
+                alt={media.title}
+                fill
+                className="object-contain"
+              />
             </div>
           ) : isPDF ? (
             <iframe
-              src={media.file_path}
+              src={publicUrl}
               className="w-full h-[80vh]"
               title={media.title}
             />

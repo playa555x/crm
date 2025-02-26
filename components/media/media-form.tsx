@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { Media, Folder } from "@/types/media"
-import { useEffect } from "react"
 
 interface MediaFormProps {
   media?: Media
@@ -44,6 +43,11 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
       loadFolders()
     }
   }, [contactId])
+
+  useEffect(() => {
+    // Update selected folder when folderId prop changes
+    setSelectedFolderId(folderId || null)
+  }, [folderId])
 
   async function loadFolders() {
     try {
