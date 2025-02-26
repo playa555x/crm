@@ -1,5 +1,3 @@
-// Vollständiger Pfad: /components/media/media-form.tsx
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -18,12 +16,13 @@ import type { Media } from "@/types/media"
 
 interface MediaFormProps {
   media?: Media
+  contactId?: string
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
 }
 
-export function MediaForm({ media, open, onOpenChange, onSuccess }: MediaFormProps) {
+export function MediaForm({ media, contactId, open, onOpenChange, onSuccess }: MediaFormProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
@@ -42,6 +41,9 @@ export function MediaForm({ media, open, onOpenChange, onSuccess }: MediaFormPro
         // Update existing media
         const { error } = await fetch(`/api/media/${media.id}`, {
           method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             title,
             description,
@@ -65,6 +67,9 @@ export function MediaForm({ media, open, onOpenChange, onSuccess }: MediaFormPro
         // 2. Create database entry
         const { error: dbError } = await fetch("/api/media", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             title,
             description,
@@ -72,6 +77,7 @@ export function MediaForm({ media, open, onOpenChange, onSuccess }: MediaFormPro
             file_type: file.type.split("/")[0],
             mime_type: file.type,
             size: file.size,
+            contactId: contactId,
           }),
         }).then(res => res.json())
 

@@ -34,6 +34,8 @@ export async function POST(request: Request) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     const json: CreateMediaDTO = await request.json()
+    
+    console.log("Received media data:", json)
 
     const {
       data: { user },
@@ -46,20 +48,30 @@ export async function POST(request: Request) {
       )
     }
 
+    // Transform contactId to contact_id for database
+    const { contactId, ...rest } = json
+    const mediaData = {
+      ...rest,
+      contact_id: contactId,
+      created_by: user.id,
+    }
+
+    console.log("Creating media with data:", mediaData)
+
     const { data: media, error } = await supabase
       .from("media")
-      .insert({
-        ...json,
-        created_by: user.id,
-      })
+      .insert(mediaData)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("Supabase error:", error)
+      throw error
+    }
 
     return NextResponse.json(media)
   } catch (error) {
-    console.error("Error:", error)
+    console.error("Error creating media:", error)
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
