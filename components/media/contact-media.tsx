@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react"
+"use client"
+
+import { useState, useEffect, useRef } from "react" // useRef hinzugefügt
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { MediaGrid } from "./media-grid"
 import { MediaForm } from "./media-form"
@@ -7,7 +9,6 @@ import { FolderList } from "./folder-list"
 import { Button } from "@/components/ui/button"
 import { Plus, FolderPlus } from 'lucide-react'
 import type { Media } from "@/types/media"
-import { useRef } from "react"
 
 interface ContactMediaProps {
   contactId: string
@@ -20,6 +21,7 @@ export function ContactMedia({ contactId }: ContactMediaProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const supabase = createClientComponentClient()
+  const folderListRef = useRef<{ reloadFolders: () => void } | null>(null)
 
   useEffect(() => {
     loadMedia()
@@ -102,12 +104,12 @@ export function ContactMedia({ contactId }: ContactMediaProps) {
             <FolderPlus className="h-4 w-4" />
           </Button>
         </div>
-<FolderList
-  ref={folderListRef}
-  contactId={contactId}
-  selectedFolderId={selectedFolderId}
-  onFolderSelect={setSelectedFolderId}
-/>
+        <FolderList
+          ref={folderListRef}
+          contactId={contactId}
+          selectedFolderId={selectedFolderId}
+          onFolderSelect={setSelectedFolderId}
+        />
       </div>
 
       <div className="col-span-3 space-y-4">
@@ -146,16 +148,16 @@ export function ContactMedia({ contactId }: ContactMediaProps) {
         folderId={selectedFolderId}
       />
 
-<FolderForm
-  open={isFolderFormOpen}
-  onOpenChange={setIsFolderFormOpen}
-  onSuccess={() => {
-    folderListRef.current?.reloadFolders() // Lade die Ordnerliste neu
-    loadMedia()
-    setIsFolderFormOpen(false)
-  }}
-  contactId={contactId}
-/>
+      <FolderForm
+        open={isFolderFormOpen}
+        onOpenChange={setIsFolderFormOpen}
+        onSuccess={() => {
+          folderListRef.current?.reloadFolders()
+          loadMedia()
+          setIsFolderFormOpen(false)
+        }}
+        contactId={contactId}
+      />
     </div>
   )
 }
