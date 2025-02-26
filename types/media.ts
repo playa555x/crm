@@ -1,4 +1,4 @@
-export type MediaType = 'image' | 'document' | 'video' | 'other'
+export type MediaType = "image" | "document" | "video" | "other"
 
 export type Folder = {
   id: string
@@ -46,3 +46,4 @@ export type CreateFolderDTO = {
   name: string
   contact_id: string
 }
+
