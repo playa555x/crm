@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -29,7 +28,7 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
   const [isLoading, setIsLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [folders, setFolders] = useState<Folder[]>([])
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(folderId || null)
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
 
   useEffect(() => {
     if (contactId) {
@@ -38,7 +37,6 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
   }, [contactId])
 
   useEffect(() => {
-    // Update selected folder when folderId prop changes
     setSelectedFolderId(folderId || null)
   }, [folderId])
 
@@ -153,19 +151,13 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
           </div>
           <div className="space-y-2">
             <Label htmlFor="folder">Ordner</Label>
-            <Select
-              name="folder"
-              value={selectedFolderId || undefined}
-              onValueChange={(value) => {
-                setSelectedFolderId(value)
-              }}
-            >
-              <SelectTrigger id="folder" onClick={(e) => e.preventDefault()}>
+            <Select defaultValue={selectedFolderId || undefined} onValueChange={setSelectedFolderId}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Ordner auswählen" />
               </SelectTrigger>
               <SelectContent>
                 {folders.map((folder) => (
-                  <SelectItem key={folder.id} value={folder.id} onSelect={(e) => e.preventDefault()}>
+                  <SelectItem key={folder.id} value={folder.id}>
                     {folder.name}
                   </SelectItem>
                 ))}
@@ -179,10 +171,7 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
                 id="file"
                 name="file"
                 type="file"
-                onChange={(e) => {
-                  e.preventDefault()
-                  setFile(e.target.files?.[0] || null)
-                }}
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
                 required
               />
             </div>
