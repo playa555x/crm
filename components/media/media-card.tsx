@@ -10,6 +10,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -28,16 +30,18 @@ interface MediaCardProps {
 
 export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProps) {
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const supabase = createClientComponentClient()
   
   const isImage = media.file_type === 'image'
   const isPDF = media.mime_type === 'application/pdf'
   
   // Get public URL for the file
-  const { data: { publicUrl } } = supabase
-    .storage
-    .from('media')
-    .getPublicUrl(media.file_path)
+  const { data } = supabase.storage.from('media').getPublicUrl(media.file_path)
+  const publicUrl = data?.publicUrl
+
+  // Fallback URL wenn keine public URL verfügbar
+  const imageUrl = !imageError && publicUrl ? publicUrl : "/placeholder.svg"
 
   return (
     <>
@@ -49,10 +53,14 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
           >
             {isImage ? (
               <Image
-                src={publicUrl || "/placeholder.svg"}
+                src={imageUrl || "/placeholder.svg"}
                 alt={media.title}
                 fill
                 className="object-cover"
+                onError={() => setImageError(true)}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority={false}
+                loading="lazy"
               />
             ) : (
               <div className="relative aspect-video bg-muted flex items-center justify-center">
@@ -112,13 +120,19 @@ export function MediaCard({ media, onEdit, onDelete, onDownload }: MediaCardProp
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{media.title}</DialogTitle>
+          </DialogHeader>
           {isImage ? (
             <div className="relative aspect-video">
               <Image
-                src={publicUrl || "/placeholder.svg"}
+                src={imageUrl || "/placeholder.svg"}
                 alt={media.title}
                 fill
                 className="object-contain"
+                onError={() => setImageError(true)}
+                sizes="100vw"
+                priority
               />
             </div>
           ) : isPDF ? (

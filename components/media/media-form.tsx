@@ -60,74 +60,82 @@ export function MediaForm({ media, contactId, folderId, open, onOpenChange, onSu
     }
   }
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setIsLoading(true)
+ // In der onSubmit Funktion den Upload-Teil aktualisieren:
+async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault()
+  setIsLoading(true)
 
-    try {
-      const formData = new FormData(event.currentTarget)
-      const title = formData.get("title") as string
-      const description = formData.get("description") as string
+  try {
+    const formData = new FormData(event.currentTarget)
+    const title = formData.get("title") as string
+    const description = formData.get("description") as string
 
-      if (media) {
-        // Update existing media
-        const { error } = await fetch(`/api/media/${media.id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            title,
-            description,
-            folder_id: selectedFolderId
-          }),
-        }).then(res => res.json())
+    if (media) {
+      // Update existing media
+      const { error } = await fetch(`/api/media/${media.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          folder_id: selectedFolderId
+        }),
+      }).then(res => res.json())
 
-        if (error) throw error
-      } else if (file) {
-        // Upload new file
-        const fileExt = file.name.split(".").pop()
-        const fileName = `${Math.random()}.${fileExt}`
-        const filePath = `${fileName}`
-
-        // 1. Upload file to Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filePath, file)
-
-        if (uploadError) throw uploadError
-
-        // 2. Create database entry
-        const { error: dbError } = await fetch("/api/media", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            title,
-            description,
-            file_path: filePath,
-            file_type: file.type.split("/")[0],
-            mime_type: file.type,
-            size: file.size,
-            contactId: contactId,
-            folderId: selectedFolderId
-          }),
-        }).then(res => res.json())
-
-        if (dbError) throw dbError
+      if (error) throw error
+    } else if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error("Datei zu groß (max. 10MB)")
       }
 
-      onSuccess?.()
-      router.refresh()
-      onOpenChange(false)
-    } catch (error) {
-      console.error("Error:", error)
-      alert("Ein Fehler ist aufgetreten")
-    } finally {
-      setIsLoading(false)
+      // Create structured file path
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${contactId}/${selectedFolderId || 'uncategorized'}/${Date.now()}.${fileExt}`
+
+      // 1. Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("media")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false
+        })
+
+      if (uploadError) throw uploadError
+
+      // 2. Create database entry
+      const { error: dbError } = await fetch("/api/media", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          file_path: fileName,
+          file_type: file.type.split("/")[0],
+          mime_type: file.type,
+          size: file.size,
+          contactId: contactId,
+          folderId: selectedFolderId
+        }),
+      }).then(res => res.json())
+
+      if (dbError) throw dbError
     }
+
+    onSuccess?.()
+    router.refresh()
+    onOpenChange(false)
+  } catch (error: any) {
+    console.error("Error:", error)
+    alert(error.message || "Ein Fehler ist aufgetreten")
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
