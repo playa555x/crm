@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { ContactForm } from "./contact-form"
+import { toast } from "sonner"
 
 // Hilfs-Funktion zur Konvertierung von snake_case zu camelCase
 const snakeToCamelCase = (data: any) => {
@@ -81,11 +82,11 @@ export function ContactList() {
 
       if (error) throw error
       
-      // Konvertiere snake_case zu camelCase
       const convertedData = snakeToCamelCase(data) as Contact[]
       setContacts(convertedData || [])
     } catch (error) {
       console.error("Error fetching contacts:", error)
+      toast.error("Fehler beim Laden der Kontakte")
     } finally {
       setLoading(false)
     }
@@ -93,25 +94,51 @@ export function ContactList() {
 
   const handleCreateContact = async (newContact: Partial<Contact>) => {
     try {
-      // Konvertiere zu snake_case für Supabase
-      const contactData = camelToSnakeCase(newContact)
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError) throw userError
+
+      if (!user) {
+        throw new Error("Nicht authentifiziert")
+      }
+
+      // Prepare contact data
+      const now = new Date().toISOString()
+      const contactData = {
+        ...camelToSnakeCase(newContact),
+        created_by: user.id,
+        created_at: now,
+        updated_at: now
+      }
+
+      console.log("Sending contact data:", contactData)
 
       const { data, error } = await supabase
         .from("contacts")
         .insert([contactData])
         .select()
+        .single()
 
-      if (error) throw error
+      if (error) {
+        console.error("Supabase error:", error)
+        throw error
+      }
 
-      // Konvertiere zurück zu camelCase
-      const convertedData = snakeToCamelCase(data[0]) as Contact
+      if (!data) {
+        throw new Error("Keine Daten zurückgegeben")
+      }
+
+      const convertedData = snakeToCamelCase(data) as Contact
       setContacts([convertedData, ...contacts])
       setIsDialogOpen(false)
-    } catch (error) {
+      toast.success("Kontakt erfolgreich erstellt")
+    } catch (error: any) {
       console.error("Error creating contact:", error)
+      toast.error(`Fehler beim Erstellen des Kontakts: ${error.message || 'Unbekannter Fehler'}`)
     }
   }
 
+  // Rest der Komponente bleibt gleich...
   const getCategoryBadge = (category: Contact["category"]) => {
     const colors = {
       customer: "bg-green-500",
